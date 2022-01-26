@@ -27,6 +27,13 @@ type LDAPClient struct {
 	ClientCertificates []tls.Certificate // Adding client certificates
 }
 
+type LdapClientInterface interface {
+	Connect() error
+	Close()
+	Authenticate(username, password string) (bool, map[string]string, error)
+	GetGroupsOfUser(username string) ([]string, error)
+}
+
 // Connect connects to the ldap backend.
 func (lc *LDAPClient) Connect() error {
 	if lc.Conn == nil {
@@ -116,6 +123,7 @@ func (lc *LDAPClient) Authenticate(username, password string) (bool, map[string]
 	for _, attr := range lc.Attributes {
 		user[attr] = sr.Entries[0].GetAttributeValue(attr)
 	}
+	user["dn"] = userDN
 
 	// Bind as the user to verify their password
 	err = lc.Conn.Bind(userDN, password)
